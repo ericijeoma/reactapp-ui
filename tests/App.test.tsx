@@ -6,6 +6,6 @@ describe("App Component", () => {
     render(<App />);
     const heading = screen.getByRole("heading");
     expect(heading).toBeInTheDocument();
-    expect(heading).toHaveTextContent("Vite + rreact");
+    expect(heading).toHaveTextContent("Vite + React");
   });
 });
