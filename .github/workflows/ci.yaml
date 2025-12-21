@@ -53,7 +53,7 @@ jobs:
           git clone https://${{ secrets.GH_PAT }}@github.com/gpslakshan/reactapp-manifests.git
           cd reactapp-manifests
           # Use 'sed' to update the image tag in your deployment file
-          sed -i "s|image: your-docker-user/reactapp-ui:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/reactapp-ui:${{ github.sha }}|g" deployment.yaml
+          sed -i "s|image: ${{ secrets.DOCKERHUB_USERNAME }}/reactapp-ui:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/reactapp-ui:${{ github.sha }}|g" deployment.yaml
           git add deployment.yaml
           git commit -m "Update image to ${{ github.sha }}"
           git push
