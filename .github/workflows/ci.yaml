@@ -1,0 +1,59 @@
+name: CI Pipeline
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.25.0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check Linting
+        run: pnpm run lint
+
+      - name: Run Tests
+        run: pnpm run test
+
+      - name: Build Project
+        run: pnpm run build
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reactapp-ui:${{ github.sha }}
+
+      # The GitOps "Magic" Step: Update the separate manifest repo
+      - name: Update Manifest Repo
+        run: |
+          git config --global user.email "ci@example.com"
+          git config --global user.name "CI-Bot"
+          git clone https://${{ secrets.GH_PAT }}@github.com/gpslakshan/reactapp-manifests.git
+          cd reactapp-manifests
+          # Use 'sed' to update the image tag in your deployment file
+          sed -i "s|image: your-docker-user/reactapp-ui:.*|image: ${{ secrets.DOCKERHUB_USERNAME }}/reactapp-ui:${{ github.sha }}|g" deployment.yaml
+          git add deployment.yaml
+          git commit -m "Update image to ${{ github.sha }}"
+          git push
